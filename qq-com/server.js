@@ -36,13 +36,21 @@ var server = http.createServer(function (request, response) {
     response.write(fs.readFileSync('./public/friends.json'))
     response.end()
   } else if (path === '/friends.js') {
-    response.statusCode = 200
-    response.setHeader('Content-Type', 'text/javascript;charset=utf-8')
-    const string = fs.readFileSync('./public/friends.js').toString()
-    const data = fs.readFileSync('./public/friends.json').toString()
-    const string2 = string.replace('{ { data } }', data)
-    response.write(string2)
-    response.end()
+    //jsonp定向分享   其他限制这里不做实现
+    console.log(request.headers["referer"])
+    if (request.headers["referer"].indexOf("http://zk.com:9991") === 0) {
+      response.statusCode = 200
+      response.setHeader('Content-Type', 'text/javascript;charset=utf-8')
+      // const string = fs.readFileSync('./public/friends.js').toString()  优化
+      const string = `window['{{xxx}}']({{ data }})`
+      const data = fs.readFileSync('./public/friends.json').toString()
+      const string2 = string.replace('{{ data }}', data).replace('{{xxx}}', query.callback)
+      response.write(string2)
+      response.end()
+    } else {
+      response.statusCode = 404
+      response.end()
+    }
   } else {
     response.statusCode = 404
     response.setHeader('Content-Type', 'text/html;charset=utf-8')
